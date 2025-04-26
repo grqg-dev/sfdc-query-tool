@@ -3,8 +3,8 @@ set -eo pipefail
 
 # Shared utility functions for Salesforce CLI operations
 
-# Default to PROD if not specified
-TARGET_ORG=${TARGET_ORG:-"PROD"}
+# Use empty default to allow user-prompted selection if not specified
+TARGET_ORG=${TARGET_ORG:-""}
 JQ_INSTALLED=0 # Flag to track if jq is installed
 
 # Check if sf cli is installed
@@ -64,9 +64,13 @@ clean_json() {
 format_filename() {
   local object_name=$1
   local file_type=$2  # "describe" or "query"
-  local timestamp=$(date +"%Y%m%d_%H%M%S")
+  local timestamp=$3  # Optional timestamp parameter
   
-  echo "${object_name}_${file_type}_${timestamp}"
+  if [[ -n "$timestamp" ]]; then
+    echo "${object_name}_${file_type}_${timestamp}"
+  else
+    echo "${object_name}_${file_type}"
+  fi
 }
 
 # Logging functions

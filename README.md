@@ -13,16 +13,16 @@ A collection of bash scripts for interacting with Salesforce data via the Salesf
 
 The tool consists of the following scripts:
 
-- `scripts/sfdc-data-tool.sh` - Main script to run both describe and query operations
+- `scripts/sfdc-to-sqlite.sh` - **RECOMMENDED** Integrated workflow for Salesforce to SQLite
 - `scripts/describe-objects.sh` - Get object schema information
 - `scripts/query-objects.sh` - Query object data
 - `scripts/sfdc-utils.sh` - Shared utility functions
 - `scripts/setup_sfdc_replica.sh` - Set up and manage SQLite database
-- `scripts/sfdc-to-sqlite.sh` - **NEW!** Integrated workflow for Salesforce to SQLite
+- `scripts/sfdc-data-tool.sh` - (Legacy) Main script to run both describe and query operations
 
 ## Complete Workflow
 
-The recommended way to use this tool is with the new integrated script:
+The recommended way to use this tool is with the integrated script:
 
 ```bash
 # Query Salesforce objects and create SQLite replica
@@ -43,7 +43,7 @@ The recommended way to use this tool is with the new integrated script:
 
 ## Individual Scripts Usage
 
-### Main Data Tool
+### Main Data Tool (Legacy)
 
 ```bash
 # Run both describe and query operations on default objects

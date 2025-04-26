@@ -73,9 +73,13 @@ index_table() {
     local index_sql=""
     local has_id_pk=0
 
-    # Use process substitution and mapfile for safer parsing
-    mapfile -t columns < <(echo "$table_info" | cut -d'|' -f2)
-    mapfile -t pks < <(echo "$table_info" | cut -d'|' -f6) # Check if column is part of PK
+    # Read columns and primary key info into arrays using while read
+    declare -a columns=()
+    declare -a pks=()
+    while IFS='|' read -r _ col _ _ _ pk _; do
+        columns+=("$col")
+        pks+=("$pk")
+    done < <(echo "$table_info")
 
     for i in "${!columns[@]}"; do
         local col_name="${columns[$i]}"
@@ -91,7 +95,7 @@ index_table() {
         fi
 
         # Index every other column
-        local index_name="idx_${sobject,,}_${col_name,,}" # Lowercase index name
+        local index_name="idx_$(echo "$sobject" | tr '[:upper:]' '[:lower:]')_$(echo "$col_name" | tr '[:upper:]' '[:lower:]')" # Lowercase index name
         index_sql+="CREATE INDEX IF NOT EXISTS \"$index_name\" ON \"$sobject\"(\"$col_name\");"
         log_info " -> Planning index '$index_name' on column '$col_name'"
     done

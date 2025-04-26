@@ -10,6 +10,8 @@ source "$SCRIPT_DIR/sfdc-utils.sh"
 # --- Initialization ---
 check_sf_cli
 check_jq # Needed for clean_json
+# Save the JQ_INSTALLED value before it gets reset
+JQ_WAS_INSTALLED=$JQ_INSTALLED
 
 # --- Configuration & Variables ---
 # Default field list for each object - consider moving to a config file
@@ -56,18 +58,32 @@ show_query_usage() {
 get_fields_for_object() {
   local object_name="$1"
   local fields_found=0
+  local object_lower=$(echo "$object_name" | tr '[:upper:]' '[:lower:]')
+  
+  # First, check if we have a fields file from describe-objects.sh
+  local fields_file="$OUTPUT_DIR/${object_lower}_fields.txt"
+  
+  if [[ -f "$fields_file" ]]; then
+    echo "Using field list from $fields_file" >&2
+    # Read first 50 fields from the file to avoid hitting SOQL limits
+    # Always include Id first
+    echo -n "Id,"
+    grep -v "^Id$" "$fields_file" | head -n 49 | tr '\n' ',' | sed 's/,$//'
+    fields_found=1
+  else
+    # If no fields file found, fall back to DEFAULT_FIELDS
+    # Find the default fields for this object
+    for field_spec in "${DEFAULT_FIELDS[@]}"; do
+      # Split the spec into object name and fields
+      IFS=":" read -r obj fields <<< "$field_spec"
 
-  # Find the default fields for this object
-  for field_spec in "${DEFAULT_FIELDS[@]}"; do
-    # Split the spec into object name and fields
-    IFS=":" read -r obj fields <<< "$field_spec"
-
-    if [[ "$obj" == "$object_name" ]]; then
-      echo "$fields"
-      fields_found=1
-      break
-    fi
-  done
+      if [[ "$obj" == "$object_name" ]]; then
+        echo "$fields"
+        fields_found=1
+        break
+      fi
+    done
+  fi
 
   # If no specific fields found, return basic fields as fallback
   if [[ "$fields_found" -eq 0 ]]; then
@@ -121,13 +137,16 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-# Use default TARGET_ORG from utils if not overridden by args or env var
-source "$SCRIPT_DIR/sfdc-utils.sh" # Re-source to get the default if needed
+# Get default TARGET_ORG if needed
 if [[ -z "$TARGET_ORG" ]]; then
-    : # Default from utils will be used by sf commands
+    # We already have the default from the initial source
+    : # No action needed
 else
     export TARGET_ORG # Export if set by arg
 fi
+
+# Restore the JQ_INSTALLED value
+JQ_INSTALLED=$JQ_WAS_INSTALLED
 
 # Default set of objects if none specified
 if [[ ${#OBJECTS[@]} -eq 0 ]]; then
@@ -163,7 +182,8 @@ for object in "${OBJECTS[@]}"; do
 
   # Generate output filename (lowercase object name)
   object_lower=$(echo "$object" | tr '[:upper:]' '[:lower:]')
-  output_file="$OUTPUT_DIR/$(format_filename "${object_lower}" "query").$OUTPUT_FORMAT"
+  timestamp=$(date +"%Y%m%d_%H%M%S")
+  output_file="$OUTPUT_DIR/$(format_filename "${object_lower}" "query" "$timestamp").$OUTPUT_FORMAT"
 
   # Execute query
   echo "Saving $OUTPUT_FORMAT results to $output_file"

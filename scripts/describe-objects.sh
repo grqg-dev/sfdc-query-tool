@@ -10,6 +10,8 @@ source "$SCRIPT_DIR/sfdc-utils.sh"
 # --- Initialization ---
 check_sf_cli
 check_jq
+# Save the JQ_INSTALLED value before it gets reset
+JQ_WAS_INSTALLED=$JQ_INSTALLED
 
 # --- Variables ---
 OBJECTS=()
@@ -58,18 +60,17 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-# Use default TARGET_ORG from utils if not overridden by args or env var
-# The TARGET_ORG in sfdc-utils.sh has a default ('PROD'), so this ensures
-# we don't overwrite an explicitly passed '' or empty env var with that default.
-source "$SCRIPT_DIR/sfdc-utils.sh" # Re-source to get the default if needed
+# Get default TARGET_ORG if needed
 if [[ -z "$TARGET_ORG" ]]; then
-    # If TARGET_ORG is still empty, check_sf_cli will use the default from utils
-    : # No action needed, default from utils will be used
+    # We already have the default from the initial source
+    : # No action needed
 else
     # If TARGET_ORG was set by arg, export it so sf commands pick it up
     export TARGET_ORG
 fi
 
+# Restore the JQ_INSTALLED value
+JQ_INSTALLED=$JQ_WAS_INSTALLED
 
 # Default set of objects if none specified
 if [ ${#OBJECTS[@]} -eq 0 ]; then
