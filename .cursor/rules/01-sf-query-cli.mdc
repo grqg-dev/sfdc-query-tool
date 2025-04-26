@@ -1,0 +1,52 @@
+---
+description: Querying Salesforce
+globs: 
+alwaysApply: false
+---
+# Salesforce CLI Query Command Guide
+
+## Basic Usage
+
+use -o PROD to query prod
+
+```bash
+sf data query --query "SELECT Id, Name FROM Account LIMIT 10" --json | jq 'del(.result.records[].attributes)'
+```
+
+## Common Parameters
+
+- `--query` or `-q`: The SOQL query to execute
+- `--target-org` or `-o`: Username or alias for the target org
+- `--use-tooling-api` or `-t`: Use Tooling API instead of Data API
+- `--json`: Format output as JSON
+- `--csv`: Format output as CSV
+
+## Query Examples
+
+### Basic Query
+```bash
+sf data query -q "SELECT Id, Name FROM Account WHERE Name LIKE '%Test%' LIMIT 10" --json | jq 'del(.result.records[].attributes)'
+```
+
+### Export to CSV
+```bash
+sf data query -q "SELECT Id, Name FROM Account" --csv > accounts.csv
+```
+
+### Using Tooling API
+```bash
+sf data query -q "SELECT Id, Name FROM ApexClass" --use-tooling-api --json | jq 'del(.result.records[].attributes)'
+```
+
+### Filter by Date
+```bash
+sf data query -q "SELECT Id, Name FROM Opportunity WHERE CloseDate > 2023-01-01" --json | jq 'del(.result.records[].attributes)'
+```
+
+## Tips
+- Always use `--json | jq 'del(.result.records[].attributes)'` to drop Salesforce attributes arrays from results
+- Always include Id and CreatedDate since we may need it
+- Use single quotes within the SOQL query when filtering on string fields
+- Escape quotes if your shell requires it
+- For complex queries, consider storing the query in a file and using `--file` parameter
+- To improve performance for large result sets, use `LIMIT` and batch processing

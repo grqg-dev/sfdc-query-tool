@@ -1,0 +1,57 @@
+---
+description: Describing Salesforce sObjects for Querying and getting fields
+globs: 
+alwaysApply: false
+---
+# Salesforce CLI Object Description Guide
+
+## Describing Salesforce Objects
+
+unless we specify, use env = PROD
+
+To get detailed information about a Salesforce object's structure, use the `sf sobject describe` command:
+
+```bash
+sf sobject describe --sobject <ObjectName> -o PROD
+```
+
+### Examples
+
+For Account object:
+```bash
+sf sobject describe --sobject Account -o PROD
+```
+
+For Contact object:
+```bash
+sf sobject describe --sobject Contact -o PROD
+```
+
+### Getting Just Field Names (Concise)
+
+To get only the field names for an object in a concise format:
+
+```bash
+sf sobject describe --sobject <ObjectName> -o PROD --json | jq -r '.result.fields[].name'
+```
+
+Example:
+```bash
+sf sobject describe --sobject Account -o PROD --json | jq -r '.result.fields[].name'
+```
+
+This will output just a list of field names, one per line.
+
+### Output Options
+
+```bash
+sf sobject describe --sobject Account -o PROD > account.json
+```
+
+### Useful Tips
+
+- Output includes field names, data types, and relationships
+- Use this information to understand object schema before querying
+- Particularly helpful when working with custom objects
+- Use in conjunction with [05-sf-query-cli](mdc:.cursor/rules/05-sf-query-cli.mdc) for comprehensive data access
+- Always use `-o PROD` to target the production environment unless otherwise specified

@@ -1,0 +1,90 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+Rule Name: 03-sqlite3-sfdc-replica
+Description: Using SQLite3 to create a Salesforce data replica with proper indexing
+# SQLite3 SFDC Replica Guide
+
+## Database Setup
+
+```bash
+# Create a new SQLite database
+sqlite3 sfdc-replica.db
+```
+
+## Table Creation Patterns
+
+Create tables that match your Salesforce objects:
+
+```sql
+CREATE TABLE IF NOT EXISTS Account (
+    Id TEXT PRIMARY KEY,
+    Name TEXT,
+    -- Add other fields from sf sobject describe
+    LastModifiedDate TEXT,
+    CreatedDate TEXT
+);
+```
+
+## Indexing Strategy
+
+Always index fields used in WHERE clauses and JOIN conditions:
+
+```sql
+-- Index for lookup fields
+CREATE INDEX IF NOT EXISTS idx_account_name ON Account(Name);
+
+-- Index for date fields commonly used in queries
+CREATE INDEX IF NOT EXISTS idx_account_lastmod ON Account(LastModifiedDate);
+CREATE INDEX IF NOT EXISTS idx_account_created ON Account(CreatedDate);
+
+-- Index for relationship fields (foreign keys)
+CREATE INDEX IF NOT EXISTS idx_account_parentid ON Account(ParentId);
+```
+
+## Importing Data
+
+Import data using SQLite transactions for efficiency:
+
+```bash
+# Example: Query Salesforce and import to SQLite
+# First query SFDC and save as CSV
+sf data query --query "SELECT Id, Name, LastModifiedDate FROM Account" --target-org PROD --result-format csv > accounts.csv
+
+# Then import to SQLite using transaction
+sqlite3 sfdc-replica.db << EOF
+.mode csv
+.headers on
+.separator ,
+BEGIN TRANSACTION;
+.import --skip 1 accounts.csv Account
+COMMIT;
+EOF
+
+# For more complex imports with data transformation, use SQLite's shell scripting
+sqlite3 sfdc-replica.db << EOF
+BEGIN TRANSACTION;
+.read import_accounts.sql
+COMMIT;
+EOF
+```
+
+## Important Performance Considerations
+
+1. Always use transactions for bulk operations
+2. Create indexes after data import, not before
+3. Use prepared statements for repeated operations
+4. Index all fields used in WHERE clauses
+5. Consider adding composite indexes for frequently combined fields
+6. Use EXPLAIN QUERY PLAN to verify index usage
+
+## Maintenance
+
+Periodically optimize the database:
+
+```sql
+PRAGMA optimize;
+VACUUM;
+```
