@@ -252,3 +252,65 @@ This improvement ensures proper data typing in SQLite for better querying and da
   - Recommendations: best practices for using the tool
 - Added the `--clear-db` flag to the complete workflow examples
 - Improved formatting and organization of the documentation 
+
+# SFDC Replica Usage Guide Creation
+
+Created a comprehensive Cursor rule file (03-sfdc-replica.mdc) documenting how to use the SFDC replica system. The guide includes:
+
+- Overview of the key scripts and their purposes
+- Database schema information showing how Salesforce objects map to SQLite tables
+- Default objects that are queried if none are specified
+- Usage examples covering the full workflow and individual operations
+- Information about output files and locations
+- Examples for querying the SQLite database directly
+
+This rule will help developers understand how to use the SFDC replica system effectively without having to read through all the script code.
+
+# Rule Improvement Log
+
+Task: Improve Cursor rule for the codebase
+Date: Current session
+
+## Actions
+- Analyzing existing rule '03-sfdc-replica'
+- Planning improvements 
+
+# SFDC Replica Testing
+
+## Date: 2023-09-05
+
+### Summary
+Successfully tested the local SFDC replica system using SQLite. The system contains extracted Salesforce data in a SQLite database (~528MB) for local querying.
+
+### Data Tables
+- Account - Customer/prospect information
+- Opportunity - Sales opportunities
+- Product2 - Products offered
+- OpportunityLineItem - Products associated with opportunities
+- Asset - Purchased products
+- User - Salesforce users
+
+### Key Findings
+- Database contains a comprehensive snapshot of the Salesforce instance
+- Most fields are stored as TEXT type in SQLite
+- Top products by revenue:
+  - Maternity: $92.6M
+  - IUI/IVF: $13.8M
+  - Parenting & Pediatrics: $13.3M
+  - Preconception: $12.0M
+  - Menopause: $10.9M
+- Top sales representatives by opportunity count:
+  - Optum Client Resources: 1926
+  - Will Porteous: 1179
+  - Paige Emm: 536
+
+### Benefits
+- Fast local querying without Salesforce API limits
+- Ability to run complex SQL joins across multiple objects
+- Offline access to Salesforce data
+- Potential for integration with local analysis tools
+
+### Next Steps
+- Consider automated refresh schedule for keeping replica in sync
+- Explore visualization tools that can connect to SQLite
+- Create common query templates for business analytics 

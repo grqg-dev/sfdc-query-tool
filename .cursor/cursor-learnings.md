@@ -124,4 +124,48 @@
 - Leveraging Salesforce object metadata allows for more accurate schema creation
 - Field types can be extracted from describe API responses
 - When metadata is unavailable, fallback to pattern matching is a reasonable strategy
-- Temporary files can be used instead of associative arrays for better shell compatibility 
+- Temporary files can be used instead of associative arrays for better shell compatibility
+
+# Cursor Rules for Tool Documentation
+
+## Documentation Best Practices
+- Create dedicated rule files for complex tools or systems
+- Link to relevant script files using the Cursor MDC format: [filename](mdc:path/to/file)
+- Include working examples that users can copy-paste
+- Document schema information for database-related tools
+- Explain both standard workflows and individual components
+- Include directory structure and output file information
+
+## Rule Organization
+- Start with a clear high-level overview
+- Group related information into logical sections with headers
+- Use bullet points for lists of components or features
+- Include code blocks for command examples
+- Format consistently across all rule files
+
+## Rule Discoverability
+- Use descriptive, numbered filenames (e.g., `03-sfdc-replica.mdc`)
+- Include the rule in the available_instructions section of the AI conversation
+- Reference related rules when appropriate
+
+# Learnings: SFDC Replica System
+
+## SQLite for Salesforce Data
+- Salesforce data can be effectively replicated to SQLite for local querying
+- Main advantage: Breaking free of API limits while enabling complex SQL joins
+- Challenge: Type mapping (most fields become TEXT in SQLite)
+
+## Salesforce Data Model Insights
+- OpportunityLineItem connects Opportunities to Products
+- Assets represent purchased products with their status and pricing
+- Account hierarchy shows parent-child relationships (ParentId field)
+
+## Query Performance
+- SQLite handles multi-table joins efficiently even with large datasets
+- Schema design maintains Salesforce's reference integrity
+- Indexing appears to be in place on key fields (mentioned in the replica guide)
+
+## Data Architecture Pattern
+- This replica system demonstrates an effective pattern for cloud-to-local data synchronization
+- Could be extended to other SaaS platforms beyond Salesforce
+- Allows for hybrid cloud-local data analytics strategy 

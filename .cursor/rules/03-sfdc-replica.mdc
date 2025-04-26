@@ -1,0 +1,27 @@
+---
+description: Using the local Salesforce data replica system with SQLite for querying Salesforce data locally
+globs: 
+alwaysApply: false
+---
+# SFDC Replica Usage Guide
+
+This guide explains how to use our local Salesforce data replica system. The system has extracts data from Salesforce and stores it in a SQLite database for local use and querying.
+
+## Database Schema
+
+Schema: [db.schema](mdc:output/db.schema)
+
+The database schema is dynamically created based on the Salesforce objects being queried. Each Salesforce object becomes a table in the SQLite database with the same name. Field types are mostly mapped to SQLite TEXT for compatibility, with some basic type mapping:
+
+- Boolean fields (Is*/Has* pattern or boolean type in metadata) → BOOLEAN
+- Most other fields → TEXT
+
+The system automatically creates indexes on all fields to optimize queries.
+
+## Querying the SQLite Database
+
+You can directly query the SQLite database:
+
+```bash
+sqlite3 output/sfdc-replica.db "SELECT Id, Name FROM Account LIMIT 10;"
+```

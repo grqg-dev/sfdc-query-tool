@@ -208,7 +208,7 @@ if [[ "$SKIP_IMPORT" -ne 1 ]]; then
   for object in "${OBJECTS[@]}"; do
     object_lower=$(echo "$object" | tr '[:upper:]' '[:lower:]')
     # Find the most recent CSV file for this object
-    csv_file=$(find "$OUTPUT_DIR" -name "${object_lower}_query_*.csv" -type f -print0 2>/dev/null | xargs -0 ls -t 2>/dev/null | head -n 1)
+    csv_file=$(find "$OUTPUT_DIR" -name "${object_lower}_query.csv" -type f -print0 2>/dev/null | xargs -0 ls -t 2>/dev/null | head -n 1)
     
     if [[ -n "$csv_file" ]]; then
       echo "Importing $object from $csv_file..."
@@ -237,6 +237,16 @@ if [[ "$SKIP_IMPORT" -ne 1 ]]; then
     echo "--------------------------------------------------------"
   fi
 fi
+
+# Export schema without indexes
+echo "Exporting schema without indexes..."
+if sqlite3 "$DB_FILE" ".schema" | grep -v "CREATE INDEX" > "$OUTPUT_DIR/db.schema"; then
+  echo "Schema exported to: $OUTPUT_DIR/db.schema"
+else
+  echo "Warning: Failed to export schema" >&2
+fi
+echo "--------------------------------------------------------"
+
 
 echo "Salesforce to SQLite workflow completed."
 echo "Results available in: $OUTPUT_DIR"

@@ -65,10 +65,9 @@ get_fields_for_object() {
   
   if [[ -f "$fields_file" ]]; then
     echo "Using field list from $fields_file" >&2
-    # Read first 50 fields from the file to avoid hitting SOQL limits
+    # Filter out UserPreferences fields and include all others
     # Always include Id first
-    echo -n "Id,"
-    grep -v "^Id$" "$fields_file" | head -n 49 | tr '\n' ',' | sed 's/,$//'
+    grep -v -e "^UserPreferences" -e "^UserPermissions" "$fields_file" | tr '\n' ',' | sed 's/,$//'
     fields_found=1
   else
     # If no fields file found, fall back to DEFAULT_FIELDS
@@ -182,8 +181,7 @@ for object in "${OBJECTS[@]}"; do
 
   # Generate output filename (lowercase object name)
   object_lower=$(echo "$object" | tr '[:upper:]' '[:lower:]')
-  timestamp=$(date +"%Y%m%d_%H%M%S")
-  output_file="$OUTPUT_DIR/$(format_filename "${object_lower}" "query" "$timestamp").$OUTPUT_FORMAT"
+  output_file="$OUTPUT_DIR/$(format_filename "${object_lower}" "query").$OUTPUT_FORMAT"
 
   # Execute query
   echo "Saving $OUTPUT_FORMAT results to $output_file"
