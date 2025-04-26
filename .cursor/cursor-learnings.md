@@ -110,3 +110,18 @@
 - Make scripts work well with Unix pipes and redirects
 - Return meaningful exit codes
 - Support both interactive and non-interactive usage 
+
+# SQLite Data Type Mapping for Salesforce
+
+## Boolean Type Handling
+- SQLite supports BOOLEAN type for true/false values
+- Salesforce boolean fields should be mapped to SQLite BOOLEAN instead of TEXT
+- Boolean fields in Salesforce typically follow naming patterns: `IsActive`, `HasAttachment`, etc.
+- Using proper types makes queries more efficient and prevents type conversion errors
+- SQLite treats 0 as false and 1 as true internally for boolean values
+
+## Metadata-Driven Schema Creation
+- Leveraging Salesforce object metadata allows for more accurate schema creation
+- Field types can be extracted from describe API responses
+- When metadata is unavailable, fallback to pattern matching is a reasonable strategy
+- Temporary files can be used instead of associative arrays for better shell compatibility 

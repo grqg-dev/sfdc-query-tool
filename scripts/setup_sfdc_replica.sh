@@ -49,8 +49,31 @@ init_db() {
 # SQLite doesn't have robust type checking, so TEXT is generally safest for import.
 # We might enhance this later to detect basic types if needed.
 map_sf_type_to_sqlite() {
-    # For now, map everything to TEXT
-    echo "TEXT"
+    local field_name="$1"
+    local field_type="$2"
+
+    # If field type is provided, use it for mapping
+    if [ -n "$field_type" ]; then
+        # Map Salesforce field types to SQLite types
+        case "$field_type" in
+            "boolean")
+                echo "BOOLEAN"
+                ;;
+            *)
+                # Default to TEXT for most types for now
+                echo "TEXT"
+                ;;
+        esac
+    else
+        # If no specific type info is available, check field name patterns
+        if [[ "$field_name" =~ ^Is[A-Z] || "$field_name" =~ Has[A-Z] ]]; then
+            # Field names starting with "Is" or "Has" followed by uppercase letter are likely booleans
+            echo "BOOLEAN"
+        else
+            # Default to TEXT for unknown fields
+            echo "TEXT"
+        fi
+    fi
 }
 
 # Create recommended indexes for a table based on common SFDC patterns
@@ -140,11 +163,38 @@ import_csv_data() {
 
     log_info "Starting import for SObject '$sobject' from file '$csv_file' into '$DB_FILE'"
 
-    # --- 1. Read Header and Prepare CREATE TABLE ---
+    # --- 1. Check for object metadata ---
+    local object_lower=$(echo "$sobject" | tr '[:upper:]' '[:lower:]')
+    local describe_file="$SCRIPT_DIR/../output/${object_lower}_describe.json"
+    local has_field_metadata=0
+    local temp_metadata_file=""
+
+    if [ -f "$describe_file" ] && command -v jq &> /dev/null; then
+        log_info "Found object metadata file: $describe_file"
+        has_field_metadata=1
+        
+        # Create a temporary file to store field metadata
+        temp_metadata_file=$(mktemp)
+        # Extract field names and types
+        if ! jq -r '.result.fields[] | "\(.name):\(.type)"' "$describe_file" > "$temp_metadata_file" 2>/dev/null; then
+            log_warning "Could not extract field metadata from $describe_file"
+            has_field_metadata=0
+            rm -f "$temp_metadata_file"
+            temp_metadata_file=""
+        else
+            log_info "Successfully loaded metadata from $describe_file"
+        fi
+    else
+        log_info "No metadata file found at $describe_file or jq not available, using field name patterns"
+    fi
+
+    # --- 2. Read Header and Prepare CREATE TABLE ---
     local header
     header=$(head -n 1 "$csv_file")
     if [ -z "$header" ]; then
         log_error "CSV file '$csv_file' appears to be empty or has no header."
+        # Clean up temp file if it exists
+        [ -n "$temp_metadata_file" ] && rm -f "$temp_metadata_file"
         exit 1
     fi
 
@@ -161,6 +211,8 @@ import_csv_data() {
 
     if [ ${#fields[@]} -eq 0 ]; then
          log_error "Could not parse header fields from '$csv_file'. Is it comma-separated?"
+         # Clean up temp file if it exists
+         [ -n "$temp_metadata_file" ] && rm -f "$temp_metadata_file"
          exit 1
     fi
 
@@ -177,7 +229,14 @@ import_csv_data() {
          fields_list+=""$field"" # Quote field names for safety
 
         local sqlite_type
-        sqlite_type=$(map_sf_type_to_sqlite "$field") # Currently always TEXT
+        local field_type=""
+        
+        # Look up field type from metadata if available
+        if [ "$has_field_metadata" -eq 1 ] && [ -n "$temp_metadata_file" ]; then
+            field_type=$(grep -E "^$field:" "$temp_metadata_file" | cut -d':' -f2)
+        fi
+        
+        sqlite_type=$(map_sf_type_to_sqlite "$field" "$field_type")
 
         if [[ "$field" == "Id" ]]; then
             col_defs+=(""$field" $sqlite_type PRIMARY KEY")
@@ -186,6 +245,9 @@ import_csv_data() {
             col_defs+=(""$field" $sqlite_type")
         fi
     done
+
+    # Clean up temp file if it exists
+    [ -n "$temp_metadata_file" ] && rm -f "$temp_metadata_file"
 
     if [[ "$has_id" -eq 0 ]]; then
         log_warning "CSV header does not contain an 'Id' column. Creating table without a primary key."
@@ -197,7 +259,7 @@ import_csv_data() {
 
     log_info "Generated Schema: $create_sql"
 
-    # --- 2. Create Table ---
+    # --- 3. Create Table ---
     log_info "Creating table '$sobject' if it doesn't exist..."
     sqlite3 "$DB_FILE" "$create_sql" || {
         log_error "Failed to create table '$sobject' in '$DB_FILE'."
@@ -205,7 +267,7 @@ import_csv_data() {
     }
     log_success "Table '$sobject' created or already exists."
 
-    # --- 3. Import Data ---
+    # --- 4. Import Data ---
     log_info "Importing data from '$csv_file' into table '$sobject'..."
     # Using temporary import table to handle potential existing data or conflicts if needed later?
     # For now, simple import. Assumes table is empty or we want to append.
@@ -219,7 +281,7 @@ COMMIT;
 EOF
     log_success "Data imported into '$sobject'."
 
-    # --- 4. Index Table ---
+    # --- 5. Index Table ---
     index_table "$sobject" || {
         # index_table logs its own errors, just note failure
         log_warning "Indexing step for '$sobject' encountered issues."

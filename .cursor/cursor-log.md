@@ -231,3 +231,14 @@ Reviewed the Salesforce Query Tool codebase to identify issues and unused code. 
 - Added `--clear-db` flag to `sfdc-to-sqlite.sh`
 - Flag allows users to clear existing database before starting new import
 - Maintains backward compatibility with existing behavior 
+
+# Salesforce Query Tool Enhancement Log
+
+## Improved SQLite Data Type Handling for Salesforce Booleans
+
+- Enhanced the `map_sf_type_to_sqlite()` function to map Salesforce boolean fields to SQLite BOOLEAN type
+- Added field name pattern detection for boolean fields (starting with "Is" or "Has")
+- Modified import process to load field metadata from Salesforce object descriptions
+- Implemented type mapping based on Salesforce field metadata when available
+
+This improvement ensures proper data typing in SQLite for better querying and data integrity. 
