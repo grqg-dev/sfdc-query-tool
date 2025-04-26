@@ -39,6 +39,9 @@ The recommended way to use this tool is with the integrated script:
 
 # Use a custom database location
 ./scripts/sfdc-to-sqlite.sh --db ./my-database.db
+
+# Clear existing database before importing
+./scripts/sfdc-to-sqlite.sh --clear-db
 ```
 
 ## Individual Scripts Usage
@@ -119,4 +122,42 @@ The scripts work with the following objects by default:
 - Contact
 - Lead
 
-Additional objects can be specified as command-line arguments. 
+Additional objects can be specified as command-line arguments.
+
+## Data Type Handling
+
+The tool intelligently maps Salesforce data types to appropriate SQLite data types:
+
+### Boolean Fields
+- Salesforce boolean fields are properly mapped to SQLite BOOLEAN type
+- The tool uses two methods to identify boolean fields:
+  1. **Primary**: Field type information from Salesforce object metadata (`describe` results)
+  2. **Fallback**: Pattern matching for field names that follow Salesforce boolean naming conventions (starting with "Is" or "Has")
+
+### Other Data Types
+- Currently, non-boolean fields are stored as TEXT in SQLite for maximum compatibility
+- This approach ensures that date formats, numbers, and other specialized formats are preserved exactly as they appear in Salesforce
+
+### Benefits
+- Proper boolean typing allows for more efficient queries and filtering in SQLite
+- SQL queries can use boolean operators directly without type conversion
+- Preserves data integrity and type semantics from the original Salesforce schema
+
+## Implementation Details
+
+### Metadata-Driven Schema Creation
+- The `describe-objects.sh` script generates detailed metadata about Salesforce objects
+- This metadata is used during import to determine proper field types
+- If metadata is unavailable, the system falls back to pattern-based type detection
+
+### Integration
+- The query process integrates with the describe results to provide complete field information
+- This integration enables the SQLite replica to maintain proper data typing
+- The entire process works automatically when using the recommended workflow script
+
+## Recommendations
+
+For best results:
+1. Run the complete workflow including the describe step
+2. Ensure jq is installed for proper metadata processing
+3. Use the integrated `sfdc-to-sqlite.sh` script which handles all the steps automatically 

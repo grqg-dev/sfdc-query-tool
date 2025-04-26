@@ -16,7 +16,7 @@ check_sqlite3
 # --- Configuration & Variables ---
 OBJECTS=()
 TARGET_ORG=${TARGET_ORG:-}
-QUERY_LIMIT=${QUERY_LIMIT:-100}
+QUERY_LIMIT=${QUERY_LIMIT:-1000000}
 OUTPUT_FORMAT="csv" # Fixed to CSV for SQLite import
 OUTPUT_DIR="$SCRIPT_DIR/../output"
 DB_FILE="$OUTPUT_DIR/sfdc-replica.db"

@@ -241,4 +241,14 @@ Reviewed the Salesforce Query Tool codebase to identify issues and unused code. 
 - Modified import process to load field metadata from Salesforce object descriptions
 - Implemented type mapping based on Salesforce field metadata when available
 
-This improvement ensures proper data typing in SQLite for better querying and data integrity. 
+This improvement ensures proper data typing in SQLite for better querying and data integrity.
+
+## Documentation Update for Data Type Handling
+
+- Updated README.md with detailed information about data type handling
+- Added new sections:
+  - Data Type Handling: explaining boolean field handling and other data types
+  - Implementation Details: describing the metadata-driven schema creation
+  - Recommendations: best practices for using the tool
+- Added the `--clear-db` flag to the complete workflow examples
+- Improved formatting and organization of the documentation 
